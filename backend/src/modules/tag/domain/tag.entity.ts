@@ -1,8 +1,8 @@
 export class Tag {
-    id: string;
-    name: string;
+  id: string;
+  name: string;
 
-    constructor(props: Partial<Tag>) {
-        Object.assign(this, props);
-    }
+  constructor(props: Partial<Tag>) {
+    Object.assign(this, props);
+  }
 }
