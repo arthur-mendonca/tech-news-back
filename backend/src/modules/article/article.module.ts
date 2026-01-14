@@ -15,5 +15,6 @@ import { PrismaModule } from "../../core/prisma/prisma.module";
       useClass: PrismaArticleRepository,
     },
   ],
+  exports: [CreateArticleUseCase],
 })
 export class ArticleModule {}
