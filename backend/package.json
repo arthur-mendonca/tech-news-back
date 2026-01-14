@@ -22,17 +22,21 @@
     "prisma:migrate": "prisma migrate dev"
   },
   "dependencies": {
+    "@ai-sdk/google": "^3.0.8",
     "@nestjs/common": "^11.0.1",
+    "@nestjs/config": "^4.0.2",
     "@nestjs/core": "^11.0.1",
     "@nestjs/platform-express": "^11.0.1",
     "@nestjs/schedule": "^6.1.0",
     "@prisma/adapter-pg": "^7.2.0",
     "@types/pg": "^8.16.0",
+    "ai": "^6.0.34",
     "pg": "^8.16.3",
     "pgvector": "^0.2.1",
     "reflect-metadata": "^0.2.2",
     "rss-parser": "^3.13.0",
-    "rxjs": "^7.8.1"
+    "rxjs": "^7.8.1",
+    "zod": "^4.3.5"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",
