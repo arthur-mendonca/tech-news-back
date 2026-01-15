@@ -1,9 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
 import Parser from 'rss-parser';
 import { PrismaService } from '../../core/prisma/prisma.service';
 import { CreateArticleUseCase } from '../article/use-cases/create-article.use-case';
-import { ProcessorService } from '../processor/processor.service';
 
 @Injectable()
 export class IngestionService {
@@ -13,7 +14,7 @@ export class IngestionService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly createArticleUseCase: CreateArticleUseCase,
-    private readonly processorService: ProcessorService,
+    @InjectQueue('article-processing') private readonly processingQueue: Queue,
   ) {
     this.parser = new Parser();
   }
@@ -59,9 +60,11 @@ export class IngestionService {
             this.logger.log(`Article created: ${item.title}`);
 
             try {
-              await this.processorService.processArticle(createdArticle);
+              await this.processingQueue.add('process-article', {
+                articleId: createdArticle.id
+              });
             } catch (error) {
-              this.logger.error(`Error processing article ${item.title}: ${error}`);
+              this.logger.error(`Error adding article to queue ${item.title}: ${error}`);
             }
 
           } catch (error) {
