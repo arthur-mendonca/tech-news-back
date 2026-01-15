@@ -18,7 +18,7 @@ export class IngestionService {
     this.parser = new Parser();
   }
 
-  @Cron(CronExpression.EVERY_10_MINUTES)
+  @Cron(CronExpression.EVERY_10_SECONDS)
   async handleCron() {
     this.logger.log('🤖 Starting RSS ingestion...');
     const sources = await this.prisma.feedSource.findMany({
@@ -37,6 +37,11 @@ export class IngestionService {
             }
 
             const slug = this.generateSlug(item.title);
+            const publishedDate = item.isoDate ?
+              new Date(item.isoDate) :
+              (item.pubDate ?
+                new Date(item.pubDate) :
+                new Date());
 
             const articleData = {
               title: item.title,
@@ -45,6 +50,7 @@ export class IngestionService {
               originalUrl: item.link,
               slug: slug,
               published: true,
+              publishedAt: publishedDate,
               sourceUrls: [item.link],
               relevanceScore: 0,
             };

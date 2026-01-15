@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { google } from '@ai-sdk/google';
-import { generateText, Output } from 'ai';
+import { generateObject, embed } from 'ai';
 import { z } from 'zod';
 import { PrismaService } from '../../core/prisma/prisma.service';
 import { Article } from '../article/domain/article.entity';
@@ -15,14 +15,13 @@ export class ProcessorService {
     this.logger.log(`🤖 Processing article: ${article.title}`);
 
     try {
-      const { output: object } = await generateText({
+      // 1. Gera Tags, Resumo e Score
+      const { object } = await generateObject({
         model: google('gemini-2.0-flash'),
-        output: Output.object({
-          schema: z.object({
-            tags: z.array(z.string()).max(5),
-            summary: z.string(),
-            relevanceScore: z.number().min(0).max(100),
-          }),
+        schema: z.object({
+          tags: z.array(z.string()).max(5),
+          summary: z.string(),
+          relevanceScore: z.number().min(0).max(100),
         }),
         prompt: `
           Analise o seguinte artigo e extraia as informações solicitadas.
@@ -38,6 +37,7 @@ export class ProcessorService {
 
       this.logger.log(`🆗 AI Analysis complete for: ${article.title}. Score: ${object.relevanceScore}`);
 
+      // Atualiza Artigo (Resumo e Score)
       await this.prisma.article.update({
         where: { id: article.id },
         data: {
@@ -46,21 +46,17 @@ export class ProcessorService {
         },
       });
 
+      // 2. Processa Tags (Upsert + Connect)
       if (object.tags && object.tags.length > 0) {
         for (const tagName of object.tags) {
-          // Normalized tag name for consistency
           const normalizedTagName = tagName.trim();
 
-          // Upsert Tag: create if not exists, do nothing if exists (we just need the ID to connect)
-          // Since Prisma doesn't have a direct "findOrCreate" that returns the ID easily in one go without unique constraint error handling for race conditions,
-          // upsert is the safe bet.
           const tag = await this.prisma.tag.upsert({
             where: { name: normalizedTagName },
-            update: {}, // No updates if it exists
+            update: {},
             create: { name: normalizedTagName },
           });
 
-          // Connect tag to article
           await this.prisma.article.update({
             where: { id: article.id },
             data: {
@@ -72,11 +68,31 @@ export class ProcessorService {
         }
       }
 
+      const embeddingModel = google.embedding("text-embedding-004")
+
+      this.logger.debug(` ▶️ Starting embedding`);
+      // 3. Gerar Embedding (Vetorização)
+      const { embedding, usage, response } = await embed({
+        model: embeddingModel, // Modelo novo + chamada correta
+        value: `${article.title} \n ${object.summary}`,
+      });
+      this.logger.log(`🆗 Embedding usage: ${JSON.stringify(usage)}`);
+      this.logger.log(`🆗 Embedding response: ${JSON.stringify(response).slice(0, 100)}`);
+      this.logger.debug(` ▶️ Embedding generated`);
+
+      // 4. Salvar Embedding (SQL Puro para pgvector)
+      this.logger.debug(` ▶️ Saving embedding for article: ${article.title}`);
+      await this.prisma.$executeRaw`
+        UPDATE "Article"
+        SET embedding = ${JSON.stringify(embedding)}::vector
+        WHERE id = ${article.id}
+      `;
+      this.logger.log(`🧬 Embedding generated and saved for: ${article.title}`);
+
       this.logger.log(`✅ Article updated successfully: ${article.title}`);
 
     } catch (error) {
       this.logger.error(`❌ Failed to process article ${article.id}: ${error}`);
-      //Log error, do not break application.
     }
   }
 }
