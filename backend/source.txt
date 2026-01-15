@@ -1,0 +1,7 @@
+Feedsource 
+
+Name: TechCrunch
+
+Url: https://techcrunch.com/feed/
+
+IsActive: true

@@ -3,6 +3,7 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import Parser from 'rss-parser';
 import { PrismaService } from '../../core/prisma/prisma.service';
 import { CreateArticleUseCase } from '../article/use-cases/create-article.use-case';
+import { ProcessorService } from '../processor/processor.service';
 
 @Injectable()
 export class IngestionService {
@@ -12,19 +13,20 @@ export class IngestionService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly createArticleUseCase: CreateArticleUseCase,
+    private readonly processorService: ProcessorService,
   ) {
     this.parser = new Parser();
   }
 
-  @Cron(CronExpression.EVERY_10_MINUTES)
+  @Cron(CronExpression.EVERY_10_SECONDS)
   async handleCron() {
-    this.logger.log('Starting RSS ingestion...');
+    this.logger.log('🤖 Starting RSS ingestion...');
     const sources = await this.prisma.feedSource.findMany({
       where: { isActive: true },
     });
 
     for (const source of sources) {
-      this.logger.log(`Processing source: ${source.name} (${source.url})`);
+      this.logger.log(`🤖 Processing source: ${source.name} (${source.url})`);
       try {
         const feed = await this.parser.parseURL(source.url);
 
@@ -35,6 +37,11 @@ export class IngestionService {
             }
 
             const slug = this.generateSlug(item.title);
+            const publishedDate = item.isoDate ?
+              new Date(item.isoDate) :
+              (item.pubDate ?
+                new Date(item.pubDate) :
+                new Date());
 
             const articleData = {
               title: item.title,
@@ -43,12 +50,20 @@ export class IngestionService {
               originalUrl: item.link,
               slug: slug,
               published: true,
+              publishedAt: publishedDate,
               sourceUrls: [item.link],
               relevanceScore: 0,
             };
 
-            await this.createArticleUseCase.execute(articleData);
+            const createdArticle = await this.createArticleUseCase.execute(articleData);
             this.logger.log(`Article created: ${item.title}`);
+
+            try {
+              await this.processorService.processArticle(createdArticle);
+            } catch (error) {
+              this.logger.error(`Error processing article ${item.title}: ${error}`);
+            }
+
           } catch (error) {
             if (error instanceof Error && (error.message.includes('already exists') || error.message.includes('Unique constraint'))) {
               this.logger.warn(`Article already exists: ${item.title}`);
