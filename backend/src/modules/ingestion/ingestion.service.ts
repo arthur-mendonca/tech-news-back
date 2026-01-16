@@ -19,7 +19,7 @@ export class IngestionService {
     this.parser = new Parser();
   }
 
-  @Cron(CronExpression.EVERY_10_SECONDS)
+  @Cron(CronExpression.EVERY_10_HOURS)
   async handleCron() {
     this.logger.log('🤖 Starting RSS ingestion...');
     const sources = await this.prisma.feedSource.findMany({

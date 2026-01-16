@@ -5,7 +5,7 @@ import { PrismaService } from "../../../core/prisma/prisma.service";
 
 @Injectable()
 export class PrismaArticleRepository implements IArticleRepository {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   async create(articleData: Partial<Article>): Promise<Article> {
     const created = await this.prisma.article.create({
@@ -23,13 +23,28 @@ export class PrismaArticleRepository implements IArticleRepository {
     return new Article(created);
   }
 
+  async findById(id: string): Promise<Article | null> {
+    const found = await this.prisma.article.findUnique({ where: { id } });
+    return found ? new Article({ ...found, content: found.content }) : null;
+  }
+
+  async update(id: string, articleData: Partial<Article>): Promise<Article> {
+    const updated = await this.prisma.article.update({
+      where: { id },
+      data: {
+        ...articleData,
+      },
+    });
+    return new Article({ ...updated, content: updated.content });
+  }
+
   async findBySlug(slug: string): Promise<Article | null> {
     const found = await this.prisma.article.findUnique({ where: { slug } });
-    return found ? new Article(found) : null;
+    return found ? new Article({ ...found, content: found.content }) : null;
   }
 
   async findAll(): Promise<Article[]> {
     const all = await this.prisma.article.findMany();
-    return all.map((a) => new Article(a));
+    return all.map((a) => new Article({ ...a, content: a.content }));
   }
 }
