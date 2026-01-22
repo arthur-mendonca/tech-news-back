@@ -1,5 +1,5 @@
 import { Injectable, Logger } from "@nestjs/common";
-import { Cron } from "@nestjs/schedule";
+import { Cron, CronExpression } from "@nestjs/schedule";
 import { InjectQueue } from "@nestjs/bullmq";
 import { Queue } from "bullmq";
 import Parser from "rss-parser";
@@ -25,16 +25,19 @@ export class IngestionService {
   // @Cron('0 0 */3 * * *') Executa a cada 3 horas
   // @Cron('0 30 14 * * *') Executa às 14:30 todos os dias
   // @Cron('0 */15 * * * *') Executa a cada 15 minutos
-  // @Cron(CronExpression.EVERY_10_HOURS)
-  @Cron("0 */15 * * * *")
+  @Cron(CronExpression.EVERY_10_HOURS)
   async handleCron() {
-    const isEnabled = this.configService.get<string>("INGESTION_ENABLED") === "true";
-    if (!isEnabled) {
-      this.logger.warn("🚫 RSS ingestion skipped: INGESTION_ENABLED is not true.");
+    await this.runIngestion(false);
+  }
+
+  async runIngestion(force = false) {
+    const isEnabled = this.configService.get<string>('INGESTION_ENABLED') === 'true';
+    if (!isEnabled && !force) {
+      this.logger.warn('🚫 RSS ingestion skipped: INGESTION_ENABLED is not true.');
       return;
     }
 
-    this.logger.log("🤖 Starting RSS ingestion...");
+    this.logger.log(`🤖 Starting RSS ingestion... ${force ? '(Manual Trigger)' : ''}`);
     const sources = await this.prisma.feedSource.findMany({
       where: { isActive: true },
     });
