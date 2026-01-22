@@ -3,8 +3,8 @@ services:
     build: .
     container_name: tech_news_api
     restart: always
-    ports:
-      - "3000:3000"
+    expose:
+      - "3000"
     environment:
       DATABASE_URL: "postgresql://postgres:1234@db:5432/tech_news?schema=public"
       REDIS_HOST: redis
