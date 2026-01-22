@@ -1,40 +1,40 @@
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
-import { Cron, CronExpression } from '@nestjs/schedule';
-import { InjectQueue } from '@nestjs/bullmq';
-import { Queue } from 'bullmq';
-import Parser from 'rss-parser';
-import { PrismaService } from '../../core/prisma/prisma.service';
-import { CreateArticleUseCase } from '../article/use-cases/create-article.use-case';
+import { Injectable, Logger } from "@nestjs/common";
+import { Cron } from "@nestjs/schedule";
+import { InjectQueue } from "@nestjs/bullmq";
+import { Queue } from "bullmq";
+import Parser from "rss-parser";
+import { PrismaService } from "../../core/prisma/prisma.service";
+import { CreateArticleUseCase } from "../article/use-cases/create-article.use-case";
+import { ConfigService } from "@nestjs/config";
 
 @Injectable()
-export class IngestionService implements OnModuleInit {
+export class IngestionService {
   private readonly logger = new Logger(IngestionService.name);
   private readonly parser: Parser;
-  private hasRunOnce = false;
 
   constructor(
     private readonly prisma: PrismaService,
+    private readonly configService: ConfigService,
     private readonly createArticleUseCase: CreateArticleUseCase,
-    @InjectQueue('article-processing') private readonly processingQueue: Queue,
+    @InjectQueue("article-processing") private readonly processingQueue: Queue,
   ) {
     this.parser = new Parser();
   }
 
-  async onModuleInit() {
-    if (this.hasRunOnce) {
-      return;
-    }
-    await this.handleCron();
-  }
-
-  @Cron(CronExpression.EVERY_10_HOURS)
+  // @Cron('0 0 9 * * 1-5') Executa às 9:00 todos os dias de segunda a sexta
+  // @Cron('0 0 */3 * * *') Executa a cada 3 horas
+  // @Cron('0 30 14 * * *') Executa às 14:30 todos os dias
+  // @Cron('0 */15 * * * *') Executa a cada 15 minutos
+  // @Cron(CronExpression.EVERY_10_HOURS)
+  @Cron("0 */15 * * * *")
   async handleCron() {
-    if (this.hasRunOnce) {
-      this.logger.log('RSS ingestion already executed once, skipping.');
+    const isEnabled = this.configService.get<string>("INGESTION_ENABLED") === "true";
+    if (!isEnabled) {
+      this.logger.warn("🚫 RSS ingestion skipped: INGESTION_ENABLED is not true.");
       return;
     }
-    this.hasRunOnce = true;
-    this.logger.log('🤖 Starting RSS ingestion...');
+
+    this.logger.log("🤖 Starting RSS ingestion...");
     const sources = await this.prisma.feedSource.findMany({
       where: { isActive: true },
     });
@@ -51,16 +51,16 @@ export class IngestionService implements OnModuleInit {
             }
 
             const slug = this.generateSlug(item.title);
-            const publishedDate = item.isoDate ?
-              new Date(item.isoDate) :
-              (item.pubDate ?
-                new Date(item.pubDate) :
-                new Date());
+            const publishedDate = item.isoDate
+              ? new Date(item.isoDate)
+              : item.pubDate
+                ? new Date(item.pubDate)
+                : new Date();
 
             const articleData = {
               title: item.title,
-              content: item.content || item.contentSnippet || '',
-              summary: item.contentSnippet || '',
+              content: item.content || item.contentSnippet || "",
+              summary: item.contentSnippet || "",
               originalUrl: item.link,
               slug: slug,
               published: true,
@@ -73,15 +73,18 @@ export class IngestionService implements OnModuleInit {
             this.logger.log(`Article created: ${item.title}`);
 
             try {
-              await this.processingQueue.add('process-article', {
-                articleId: createdArticle.id
+              await this.processingQueue.add("process-article", {
+                articleId: createdArticle.id,
               });
             } catch (error) {
               this.logger.error(`Error adding article to queue ${item.title}: ${error}`);
             }
-
           } catch (error) {
-            if (error instanceof Error && (error.message.includes('already exists') || error.message.includes('Unique constraint'))) {
+            if (
+              error instanceof Error &&
+              (error.message.includes("already exists") ||
+                error.message.includes("Unique constraint"))
+            ) {
               this.logger.warn(`Article already exists: ${item.title}`);
             } else {
               this.logger.error(`Error processing item ${item.title}: ${error}`);
@@ -92,15 +95,15 @@ export class IngestionService implements OnModuleInit {
         this.logger.error(`Error processing source ${source.name}: ${error}`);
       }
     }
-    this.logger.log('RSS ingestion finished.');
+    this.logger.log("RSS ingestion finished.");
   }
 
   private generateSlug(title: string): string {
     return title
       .toLowerCase()
       .trim()
-      .replace(/[^\w\s-]/g, '')
-      .replace(/[\s_-]+/g, '-')
-      .replace(/^-+|-+$/g, '');
+      .replace(/[^\w\s-]/g, "")
+      .replace(/[\s_-]+/g, "-")
+      .replace(/^-+|-+$/g, "");
   }
 }

@@ -1,12 +1,12 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { google } from '@ai-sdk/google';
-import { generateObject, embed, generateText } from 'ai';
-import { z } from 'zod';
-import { Prisma } from '@prisma/client';
-import { PrismaService } from '../../core/prisma/prisma.service';
-import { Article } from '../article/domain/article.entity';
-import { EnrichArticleUseCase } from '../ingestion/use-cases/enrich-article.use-case';
-import { ScraperService } from '../ingestion/services/scraper.service';
+import { Injectable, Logger } from "@nestjs/common";
+import { google } from "@ai-sdk/google";
+import { generateObject, embed, generateText } from "ai";
+import { z } from "zod";
+import { Prisma } from "@prisma/client";
+import { PrismaService } from "../../core/prisma/prisma.service";
+import { Article } from "../article/domain/article.entity";
+import { EnrichArticleUseCase } from "../ingestion/use-cases/enrich-article.use-case";
+import { ScraperService } from "../ingestion/services/scraper.service";
 
 @Injectable()
 export class ProcessorService {
@@ -16,7 +16,7 @@ export class ProcessorService {
     private readonly prisma: PrismaService,
     private readonly enrichArticleUseCase: EnrichArticleUseCase,
     private readonly scraperService: ScraperService,
-  ) { }
+  ) {}
 
   async processArticle(article: Article): Promise<void> {
     this.logger.log(`🤖 Processing article: ${article.title}`);
@@ -30,20 +30,25 @@ export class ProcessorService {
           processingArticle = enriched;
         }
       } catch (enrichError) {
-        this.logger.error(`⚠️ Enrichment failed for ${article.title}, continuing...: ${enrichError}`);
+        this.logger.error(
+          `⚠️ Enrichment failed for ${article.title}, continuing...: ${enrichError}`,
+        );
       }
 
       // 1. Leitura (Scraping)
       // Coleta URLs: Original + Fontes encontradas (limitado a 4 para não estourar contexto/tempo)
-      const urlsToScrape = [processingArticle.originalUrl, ...(processingArticle.sourceUrls || [])].slice(0, 4);
+      const urlsToScrape = [
+        processingArticle.originalUrl,
+        ...(processingArticle.sourceUrls || []),
+      ].slice(0, 4);
       this.logger.debug(`🕷️ Scraping ${urlsToScrape.length} URLs for context...`);
 
       const scrapedContents = await Promise.all(
-        urlsToScrape.map(url => this.scraperService.scrape(url))
+        urlsToScrape.map((url) => this.scraperService.scrape(url)),
       );
 
       // Filtra falhas e concatena
-      const fullContext = scrapedContents.filter(c => !!c).join('\n\n---\n\n');
+      const fullContext = scrapedContents.filter((c) => !!c).join("\n\n---\n\n");
 
       if (!fullContext) {
         this.logger.warn(`⚠️ No content scraped for ${article.title}. Using original summary.`);
@@ -52,7 +57,7 @@ export class ProcessorService {
       // 2. Escrita (Writer Agent)
       this.logger.debug(`✍️ Generating article content...`);
       const { text: generatedContent } = await generateText({
-        model: google('gemini-2.5-pro'),
+        model: google("gemini-2.5-pro"),
         prompt: `
           Você é um jornalista de tecnologia sênior (TechCrunch, The Verge). 
           Com base no contexto abaixo (que pode conter múltiplas fontes sobre o mesmo assunto), 
@@ -74,7 +79,7 @@ export class ProcessorService {
       // 3. Gera Metadados (Tags, Resumo, Score) baseado no CONTEÚDO GERADO
       this.logger.debug(`🧠 Analyzing generated content for metadata...`);
       const { object } = await generateObject({
-        model: google('gemini-2.0-flash'),
+        model: google("gemini-2.0-flash"),
         schema: z.object({
           tags: z.array(z.string()).max(5),
           summary: z.string(),
@@ -92,7 +97,9 @@ export class ProcessorService {
         `,
       });
 
-      this.logger.log(`🆗 AI Analysis complete for: ${article.title}. Score: ${object.relevanceScore}`);
+      this.logger.log(
+        `🆗 AI Analysis complete for: ${article.title}. Score: ${object.relevanceScore}`,
+      );
 
       // 4. Atualiza Artigo e Tags (Atomic Update)
       const updateData: Prisma.ArticleUpdateInput = {
@@ -115,7 +122,7 @@ export class ProcessorService {
         data: updateData,
       });
 
-      const embeddingModel = google.embedding("text-embedding-004")
+      const embeddingModel = google.embedding("text-embedding-004");
 
       this.logger.debug(` ▶️ Starting embedding`);
       // 5. Gerar Embedding (Vetorização)
@@ -137,7 +144,6 @@ export class ProcessorService {
       this.logger.log(`🧬 Embedding generated and saved for: ${article.title}`);
 
       this.logger.log(`✅ Article updated successfully: ${article.title}`);
-
     } catch (error) {
       this.logger.error(`❌ Failed to process article ${article.id}: ${error}`);
     }

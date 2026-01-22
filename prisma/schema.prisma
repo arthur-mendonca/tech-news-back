@@ -43,3 +43,10 @@ model FeedSource {
   url      String
   isActive Boolean @default(true)
 }
+
+model SystemSetting {
+  key         String   @id
+  value       String
+  description String?
+  updatedAt   DateTime @updatedAt
+}

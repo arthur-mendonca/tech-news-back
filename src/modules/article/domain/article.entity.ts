@@ -1,4 +1,4 @@
-import { Tag } from '../../tag/domain/tag.entity';
+import { Tag } from "../../tag/domain/tag.entity";
 
 export class Article {
   id: string;

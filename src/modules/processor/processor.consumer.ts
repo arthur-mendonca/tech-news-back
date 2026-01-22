@@ -1,10 +1,10 @@
-import { Processor, WorkerHost } from '@nestjs/bullmq';
-import { Job } from 'bullmq';
-import { Logger } from '@nestjs/common';
-import { ProcessorService } from './processor.service';
-import { PrismaService } from '../../core/prisma/prisma.service';
+import { Processor, WorkerHost } from "@nestjs/bullmq";
+import { Job } from "bullmq";
+import { Logger } from "@nestjs/common";
+import { ProcessorService } from "./processor.service";
+import { PrismaService } from "../../core/prisma/prisma.service";
 
-@Processor('article-processing')
+@Processor("article-processing")
 export class ProcessorConsumer extends WorkerHost {
   private readonly logger = new Logger(ProcessorConsumer.name);
 
@@ -16,7 +16,7 @@ export class ProcessorConsumer extends WorkerHost {
   }
 
   async process(job: Job<{ articleId: string }>): Promise<void> {
-    if (job.name === 'process-article') {
+    if (job.name === "process-article") {
       await this.handleProcessArticle(job);
     } else {
       this.logger.warn(`Unknown job name: ${job.name}`);

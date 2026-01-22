@@ -1,3 +1,4 @@
+# USAR LOCALMENTE
 services:
   db:
     image: pgvector/pgvector:pg16

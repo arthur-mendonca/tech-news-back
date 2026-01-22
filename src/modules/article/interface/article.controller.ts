@@ -7,7 +7,7 @@ import { Article } from "../domain/article.entity";
 export class ArticleController {
   constructor(
     private readonly createArticleUseCase: CreateArticleUseCase,
-    private readonly getArticleByIdUseCase: GetArticleByIdUseCase
+    private readonly getArticleByIdUseCase: GetArticleByIdUseCase,
   ) {}
 
   @Post()
