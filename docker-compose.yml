@@ -1,7 +1,6 @@
 services:
   app:
     build: .
-    image: tech_news_api
     container_name: tech_news_api
     restart: always
     ports:
