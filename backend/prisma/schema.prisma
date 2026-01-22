@@ -13,7 +13,7 @@ model Article {
   slug           String    @unique
   title          String
   summary        String
-  content        String    @db.Text
+  content        String?   @db.Text
   originalUrl    String
   sourceUrls     String[]
   relevanceScore Int // Nota de 0-100 do Gatekeeper

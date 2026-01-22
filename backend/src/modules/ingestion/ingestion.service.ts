@@ -1,25 +1,39 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
 import Parser from 'rss-parser';
 import { PrismaService } from '../../core/prisma/prisma.service';
 import { CreateArticleUseCase } from '../article/use-cases/create-article.use-case';
-import { ProcessorService } from '../processor/processor.service';
 
 @Injectable()
-export class IngestionService {
+export class IngestionService implements OnModuleInit {
   private readonly logger = new Logger(IngestionService.name);
   private readonly parser: Parser;
+  private hasRunOnce = false;
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly createArticleUseCase: CreateArticleUseCase,
-    private readonly processorService: ProcessorService,
+    @InjectQueue('article-processing') private readonly processingQueue: Queue,
   ) {
     this.parser = new Parser();
   }
 
-  @Cron(CronExpression.EVERY_10_SECONDS)
+  async onModuleInit() {
+    if (this.hasRunOnce) {
+      return;
+    }
+    await this.handleCron();
+  }
+
+  @Cron(CronExpression.EVERY_10_HOURS)
   async handleCron() {
+    if (this.hasRunOnce) {
+      this.logger.log('RSS ingestion already executed once, skipping.');
+      return;
+    }
+    this.hasRunOnce = true;
     this.logger.log('🤖 Starting RSS ingestion...');
     const sources = await this.prisma.feedSource.findMany({
       where: { isActive: true },
@@ -59,9 +73,11 @@ export class IngestionService {
             this.logger.log(`Article created: ${item.title}`);
 
             try {
-              await this.processorService.processArticle(createdArticle);
+              await this.processingQueue.add('process-article', {
+                articleId: createdArticle.id
+              });
             } catch (error) {
-              this.logger.error(`Error processing article ${item.title}: ${error}`);
+              this.logger.error(`Error adding article to queue ${item.title}: ${error}`);
             }
 
           } catch (error) {

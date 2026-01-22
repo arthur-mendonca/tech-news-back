@@ -3,7 +3,7 @@ export class Article {
   slug: string;
   title: string;
   summary: string;
-  content: string;
+  content: string | null;
   originalUrl: string;
   sourceUrls: string[];
   relevanceScore: number;
