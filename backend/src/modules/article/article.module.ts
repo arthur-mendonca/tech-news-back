@@ -1,6 +1,7 @@
 import { Module } from "@nestjs/common";
 import { ArticleController } from "./interface/article.controller";
 import { CreateArticleUseCase } from "./use-cases/create-article.use-case";
+import { GetArticleByIdUseCase } from "./use-cases/get-article-by-id.use-case";
 import { PrismaArticleRepository } from "./infra/prisma-article.repository";
 import { IArticleRepository } from "./domain/article.repository.interface";
 import { PrismaModule } from "../../core/prisma/prisma.module";
@@ -10,11 +11,12 @@ import { PrismaModule } from "../../core/prisma/prisma.module";
   controllers: [ArticleController],
   providers: [
     CreateArticleUseCase,
+    GetArticleByIdUseCase,
     {
       provide: IArticleRepository,
       useClass: PrismaArticleRepository,
     },
   ],
-  exports: [CreateArticleUseCase, IArticleRepository],
+  exports: [CreateArticleUseCase, GetArticleByIdUseCase, IArticleRepository],
 })
 export class ArticleModule {}

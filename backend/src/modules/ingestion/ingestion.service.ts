@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
@@ -7,9 +7,10 @@ import { PrismaService } from '../../core/prisma/prisma.service';
 import { CreateArticleUseCase } from '../article/use-cases/create-article.use-case';
 
 @Injectable()
-export class IngestionService {
+export class IngestionService implements OnModuleInit {
   private readonly logger = new Logger(IngestionService.name);
   private readonly parser: Parser;
+  private hasRunOnce = false;
 
   constructor(
     private readonly prisma: PrismaService,
@@ -19,8 +20,20 @@ export class IngestionService {
     this.parser = new Parser();
   }
 
+  async onModuleInit() {
+    if (this.hasRunOnce) {
+      return;
+    }
+    await this.handleCron();
+  }
+
   @Cron(CronExpression.EVERY_10_HOURS)
   async handleCron() {
+    if (this.hasRunOnce) {
+      this.logger.log('RSS ingestion already executed once, skipping.');
+      return;
+    }
+    this.hasRunOnce = true;
     this.logger.log('🤖 Starting RSS ingestion...');
     const sources = await this.prisma.feedSource.findMany({
       where: { isActive: true },
