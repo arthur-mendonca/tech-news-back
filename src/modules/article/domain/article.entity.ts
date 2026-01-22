@@ -1,3 +1,5 @@
+import { Tag } from '../../tag/domain/tag.entity';
+
 export class Article {
   id: string;
   slug: string;
@@ -9,6 +11,7 @@ export class Article {
   relevanceScore: number;
   published: boolean;
   createdAt: Date;
+  tags?: Tag[];
 
   constructor(props: Partial<Article>) {
     Object.assign(this, props);

@@ -2,7 +2,13 @@ services:
   app:
     build: .
     container_name: tech_news_api
+    # Define o perfil 'prod' para que este serviço não inicie automaticamente
+    # ao rodar apenas 'docker-compose up'. Para iniciar, use:
+    # docker-compose --profile prod up
+    profiles: ["prod"]
     restart: always
+    ports:
+      - "3000:3000"
     expose:
       - "3000"
     environment:

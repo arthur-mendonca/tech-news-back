@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { google } from '@ai-sdk/google';
 import { generateObject, embed, generateText } from 'ai';
 import { z } from 'zod';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../core/prisma/prisma.service';
 import { Article } from '../article/domain/article.entity';
 import { EnrichArticleUseCase } from '../ingestion/use-cases/enrich-article.use-case';
@@ -93,37 +94,26 @@ export class ProcessorService {
 
       this.logger.log(`🆗 AI Analysis complete for: ${article.title}. Score: ${object.relevanceScore}`);
 
-      // Atualiza Artigo (Content, Resumo e Score)
+      // 4. Atualiza Artigo e Tags (Atomic Update)
+      const updateData: Prisma.ArticleUpdateInput = {
+        content: generatedContent,
+        summary: object.summary,
+        relevanceScore: Math.round(object.relevanceScore),
+      };
+
+      if (object.tags && object.tags.length > 0) {
+        updateData.tags = {
+          connectOrCreate: object.tags.map((tag) => ({
+            where: { name: tag.trim() },
+            create: { name: tag.trim() },
+          })),
+        };
+      }
+
       await this.prisma.article.update({
         where: { id: article.id },
-        data: {
-          content: generatedContent,
-          summary: object.summary,
-          relevanceScore: object.relevanceScore,
-        },
+        data: updateData,
       });
-
-      // 4. Processa Tags (Upsert + Connect)
-      if (object.tags && object.tags.length > 0) {
-        for (const tagName of object.tags) {
-          const normalizedTagName = tagName.trim();
-
-          const tag = await this.prisma.tag.upsert({
-            where: { name: normalizedTagName },
-            update: {},
-            create: { name: normalizedTagName },
-          });
-
-          await this.prisma.article.update({
-            where: { id: article.id },
-            data: {
-              tags: {
-                connect: { id: tag.id },
-              },
-            },
-          });
-        }
-      }
 
       const embeddingModel = google.embedding("text-embedding-004")
 
