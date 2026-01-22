@@ -5,6 +5,7 @@ WORKDIR /app
 # Instalar dependências
 COPY package*.json ./
 COPY prisma ./prisma/
+COPY prisma.config.ts ./
 
 # Instalar todas as dependências (incluindo dev)
 RUN npm ci
@@ -31,6 +32,7 @@ COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package*.json ./
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/prisma.config.ts ./
 
 # Expor a porta da aplicação
 EXPOSE 3000
