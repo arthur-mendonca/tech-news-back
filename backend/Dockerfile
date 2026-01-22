@@ -1,0 +1,39 @@
+FROM node:22-alpine AS builder
+
+WORKDIR /app
+
+# Instalar dependências
+COPY package*.json ./
+COPY prisma ./prisma/
+
+# Instalar todas as dependências (incluindo dev)
+RUN npm ci
+
+# Gerar o Prisma Client
+RUN npx prisma generate
+
+# Copiar o código fonte
+COPY . .
+
+# Build da aplicação
+RUN npm run build
+
+# Stage de Produção
+FROM node:22-alpine
+
+WORKDIR /app
+
+# Instalar dependências necessárias para o sistema (OpenSSL para Prisma)
+RUN apk add --no-cache openssl ca-certificates
+
+# Copiar artefatos do build
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/package*.json ./
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/prisma ./prisma
+
+# Expor a porta da aplicação
+EXPOSE 3000
+
+# Comando de inicialização: roda migrações e inicia a app
+CMD ["sh", "-c", "npx prisma migrate deploy && npm run start:prod"]
