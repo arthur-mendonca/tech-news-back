@@ -11,7 +11,10 @@ COPY prisma.config.ts ./
 RUN npm ci
 
 # Gerar o Prisma Client
-RUN npx prisma generate
+# --no-engine é importante para build environments onde o banco não está acessível
+# Definimos uma URL dummy para o build, pois o prisma generate precisa validar o config
+ARG DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy"
+RUN npx prisma generate --no-engine
 
 # Copiar o código fonte
 COPY . .
