@@ -1,20 +1,4 @@
 services:
-  app:
-    build: .
-    container_name: tech_news_api
-    restart: always
-    expose:
-      - "3000"
-    environment:
-      DATABASE_URL: "postgresql://postgres:1234@db:5432/tech_news?schema=public"
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
-      # Caso use URL completa para Redis também:
-      # REDIS_URL: "redis://redis:6379"
-    depends_on:
-      - db
-      - redis
-
   db:
     image: pgvector/pgvector:pg16
     container_name: tech_news_db
