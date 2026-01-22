@@ -41,4 +41,4 @@ COPY --from=builder /app/prisma.config.ts ./
 EXPOSE 3000
 
 # Comando de inicialização: roda migrações e inicia a app
-CMD ["sh", "-c", "npx prisma migrate deploy --config prisma.config.ts && npm run start:prod"]
+CMD ["sh", "-c", "npx prisma migrate deploy --config prisma.config.ts && node dist/main.js"]
