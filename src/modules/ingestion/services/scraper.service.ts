@@ -28,7 +28,7 @@ export interface JinaResponse {
 export class ScraperService {
   private readonly logger = new Logger(ScraperService.name);
   // Nota: Idealmente mover para .env
-  private readonly jinaApiKey = "jina_0d6090bd85aa4aab8cdaae6352f78f69E_sDeE4jzDc26yHQFvV7TLddBPkb";
+  private readonly jinaApiKey = process.env.JINA_API_KEY;
 
   async scrape(url: string): Promise<string> {
     try {
