@@ -59,13 +59,8 @@ export class IngestionService implements OnModuleInit {
 
             const articleData = {
               title: item.title,
-<<<<<<< Updated upstream
-              content: item.content || item.contentSnippet || '',
-              summary: item.contentSnippet || '',
-=======
               content: "",
               summary: item.contentSnippet || "",
->>>>>>> Stashed changes
               originalUrl: item.link,
               slug: slug,
               published: true,

@@ -82,7 +82,6 @@ export class ProcessorService {
       const existingTagsMap = new Map(
         existingTags.map((t) => [t.name.toLowerCase(), t.name]),
       );
-      const existingTagsString = existingTags.map((t) => t.name).join(", ");
 
       const { object } = await generateObject({
         model: google('gemini-2.0-flash'),
@@ -96,7 +95,7 @@ export class ProcessorService {
           Título Original: ${article.title}
           Artigo Gerado: ${generatedContent}
 
-          Lista de Tags Disponíveis: ${existingTagsString || "Nenhuma tag cadastrada ainda."}
+          Lista de Tags Disponíveis: ${Array.from(existingTagsMap.values()).join(", ")}
 
           Gerar:
           - tags em Português (máx. 5) relacionadas ao tema;
@@ -110,38 +109,7 @@ export class ProcessorService {
         `,
       });
 
-<<<<<<< Updated upstream
       this.logger.log(`🆗 AI Analysis complete for: ${article.title}. Score: ${object.relevanceScore}`);
-=======
-      this.logger.log(
-        `🆗 AI Analysis complete for: ${article.title}. Score: ${object.relevanceScore}`,
-      );
-
-      // Normaliza tags geradas com as existentes
-      const finalTags = (object.tags || []).map((tag) => {
-        const lower = tag.trim().toLowerCase();
-        if (existingTagsMap.has(lower)) {
-          return existingTagsMap.get(lower)!; // Usa a versão canônica do banco
-        }
-        return tag.trim(); // Usa a nova tag gerada
-      });
-
-      // 4. Atualiza Artigo e Tags (Atomic Update)
-      const updateData: Prisma.ArticleUpdateInput = {
-        content: generatedContent,
-        summary: object.summary,
-        relevanceScore: Math.round(object.relevanceScore),
-      };
-
-      if (finalTags.length > 0) {
-        updateData.tags = {
-          connectOrCreate: finalTags.map((tag) => ({
-            where: { name: tag },
-            create: { name: tag },
-          })),
-        };
-      }
->>>>>>> Stashed changes
 
       // Atualiza Artigo (Content, Resumo e Score)
       await this.prisma.article.update({
