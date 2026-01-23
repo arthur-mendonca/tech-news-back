@@ -27,6 +27,10 @@ export class IngestionService implements OnModuleInit {
     await this.handleCron();
   }
 
+  // @Cron('0 0 9 * * 1-5') Executa às 9:00 todos os dias de segunda a sexta
+  // @Cron('0 0 */3 * * *') Executa a cada 3 horas
+  // @Cron('0 30 14 * * *') Executa às 14:30 todos os dias
+  // @Cron('0 */15 * * * *') Executa a cada 15 minutos
   @Cron(CronExpression.EVERY_10_HOURS)
   async handleCron() {
     if (this.hasRunOnce) {

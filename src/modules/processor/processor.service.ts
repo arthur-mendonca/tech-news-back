@@ -64,7 +64,7 @@ export class ProcessorService {
           - Se houver informações conflitantes nas fontes, mencione a divergência.
           - Mantenha o tom técnico, mas faça o artigo acessível para um público geral.
           - Mínimo de 400 palavras, máximo de 500 palavras.
-          - Você deve entregar APENAS o artigo, jamais use frases de introdução como "aqui está o artigo" ou "este é o artigo".
+          - NUNCA responda nada além do artigo em si, não inclua frases além do artigo como "claro, aqui está o artigo".
           - Você NUNCA deve nomear as seções com nomes como "Introdução", "Desenvolvimento" ou "Conclusão".
           
           Contexto:
