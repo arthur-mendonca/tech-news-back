@@ -64,6 +64,8 @@ export class ProcessorService {
           - Se houver informações conflitantes nas fontes, mencione a divergência.
           - Mantenha o tom técnico, mas faça o artigo acessível para um público geral.
           - Mínimo de 400 palavras, máximo de 500 palavras.
+          - Você deve entregar APENAS o artigo, jamais use frases de introdução como "aqui está o artigo" ou "este é o artigo".
+          - Você NUNCA deve nomear as seções com nomes como "Introdução", "Desenvolvimento" ou "Conclusão".
           
           Contexto:
           ${fullContext || article.summary}
@@ -72,6 +74,16 @@ export class ProcessorService {
 
       // 3. Gera Metadados (Tags, Resumo, Score) baseado no CONTEÚDO GERADO
       this.logger.debug(`🧠 Analyzing generated content for metadata...`);
+
+      // Busca tags existentes para consistência
+      const existingTags = await this.prisma.tag.findMany({
+        select: { name: true },
+      });
+      const existingTagsMap = new Map(
+        existingTags.map((t) => [t.name.toLowerCase(), t.name]),
+      );
+      const existingTagsString = existingTags.map((t) => t.name).join(", ");
+
       const { object } = await generateObject({
         model: google('gemini-2.0-flash'),
         schema: z.object({
@@ -84,14 +96,52 @@ export class ProcessorService {
           Título Original: ${article.title}
           Artigo Gerado: ${generatedContent}
 
+          Lista de Tags Disponíveis: ${existingTagsString || "Nenhuma tag cadastrada ainda."}
+
           Gerar:
           - tags em Português (máx. 5) relacionadas ao tema;
           - um resumo jornalístico conciso em Português, com cerca de 2 parágrafos;
           - uma nota de relevância conforme o assunto, de 0 a 100, para um público de tecnologia (Desenvolvedores/Tech Leads/Entusiastas).
+
+          Instruções para Tags:
+          1. PRIORIDADE: Selecione tags da "Lista de Tags Disponíveis" se o assunto for o mesmo (ex: use 'Apple' se o texto diz 'Apple Inc' e 'Apple' está na lista).
+          2. CRIAÇÃO: Apenas crie uma NOVA tag se o conceito for importante e NÃO existir na lista.
+          3. FORMATO: Tags curtas, simples e em Title Case (ex: Startups, Typescript, AI).
         `,
       });
 
+<<<<<<< Updated upstream
       this.logger.log(`🆗 AI Analysis complete for: ${article.title}. Score: ${object.relevanceScore}`);
+=======
+      this.logger.log(
+        `🆗 AI Analysis complete for: ${article.title}. Score: ${object.relevanceScore}`,
+      );
+
+      // Normaliza tags geradas com as existentes
+      const finalTags = (object.tags || []).map((tag) => {
+        const lower = tag.trim().toLowerCase();
+        if (existingTagsMap.has(lower)) {
+          return existingTagsMap.get(lower)!; // Usa a versão canônica do banco
+        }
+        return tag.trim(); // Usa a nova tag gerada
+      });
+
+      // 4. Atualiza Artigo e Tags (Atomic Update)
+      const updateData: Prisma.ArticleUpdateInput = {
+        content: generatedContent,
+        summary: object.summary,
+        relevanceScore: Math.round(object.relevanceScore),
+      };
+
+      if (finalTags.length > 0) {
+        updateData.tags = {
+          connectOrCreate: finalTags.map((tag) => ({
+            where: { name: tag },
+            create: { name: tag },
+          })),
+        };
+      }
+>>>>>>> Stashed changes
 
       // Atualiza Artigo (Content, Resumo e Score)
       await this.prisma.article.update({

@@ -44,7 +44,7 @@ export class IngestionService implements OnModuleInit {
       try {
         const feed = await this.parser.parseURL(source.url);
 
-        for (const item of feed.items) {
+        for (const item of feed.items.slice(0, 5)) {
           try {
             if (!item.title || !item.link) {
               continue;
@@ -59,8 +59,13 @@ export class IngestionService implements OnModuleInit {
 
             const articleData = {
               title: item.title,
+<<<<<<< Updated upstream
               content: item.content || item.contentSnippet || '',
               summary: item.contentSnippet || '',
+=======
+              content: "",
+              summary: item.contentSnippet || "",
+>>>>>>> Stashed changes
               originalUrl: item.link,
               slug: slug,
               published: true,
