@@ -31,7 +31,7 @@ export class IngestionService implements OnModuleInit {
   // @Cron('0 0 */3 * * *') Executa a cada 3 horas
   // @Cron('0 30 14 * * *') Executa às 14:30 todos os dias
   // @Cron('0 */15 * * * *') Executa a cada 15 minutos
-  @Cron(CronExpression.EVERY_10_HOURS)
+  @Cron(CronExpression.EVERY_10_SECONDS)
   async handleCron() {
     if (this.hasRunOnce) {
       this.logger.log('RSS ingestion already executed once, skipping.');

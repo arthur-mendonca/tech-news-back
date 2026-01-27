@@ -1,11 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { google } from '@ai-sdk/google';
-import { generateObject, embed, generateText } from 'ai';
+import { embed } from 'ai';
 import { z } from 'zod';
 import { PrismaService } from '../../core/prisma/prisma.service';
 import { Article } from '../article/domain/article.entity';
 import { EnrichArticleUseCase } from '../ingestion/use-cases/enrich-article.use-case';
 import { ScraperService } from '../ingestion/services/scraper.service';
+import { LLMService } from '../../core/llm/llm.service';
 
 @Injectable()
 export class ProcessorService {
@@ -15,6 +16,7 @@ export class ProcessorService {
     private readonly prisma: PrismaService,
     private readonly enrichArticleUseCase: EnrichArticleUseCase,
     private readonly scraperService: ScraperService,
+    private readonly llmService: LLMService,
   ) { }
 
   async processArticle(article: Article): Promise<void> {
@@ -50,8 +52,8 @@ export class ProcessorService {
 
       // 2. Escrita (Writer Agent)
       this.logger.debug(`✍️ Generating article content...`);
-      const { text: generatedContent } = await generateText({
-        model: google('gemini-2.5-pro'),
+      const { text: generatedContent } = await this.llmService.generateText({
+        capability: 'high-quality',
         prompt: `
           Você é um jornalista de tecnologia sênior (TechCrunch, The Verge). 
           Com base no contexto abaixo (que pode conter múltiplas fontes sobre o mesmo assunto), 
@@ -83,29 +85,29 @@ export class ProcessorService {
         existingTags.map((t) => [t.name.toLowerCase(), t.name]),
       );
 
-      const { object } = await generateObject({
-        model: google('gemini-2.0-flash'),
+      const { object } = await this.llmService.generateObject({
+        capability: 'fast',
         schema: z.object({
           tags: z.array(z.string()).max(5),
           summary: z.string(),
           relevanceScore: z.number().min(0).max(100),
         }),
         prompt: `
-          Analise o seguinte artigo de tecnologia JÁ ESCRITO e extraia as informações solicitadas.
+          Analise o seguinte artigo de tecnologia JÁ ESCRITO e extraia as informações solicitadas em um formato JSON estrito.
           Título Original: ${article.title}
           Artigo Gerado: ${generatedContent}
 
           Lista de Tags Disponíveis: ${Array.from(existingTagsMap.values()).join(", ")}
 
-          Gerar:
-          - tags em Português (máx. 5) relacionadas ao tema;
-          - um resumo jornalístico conciso em Português, com cerca de 2 parágrafos;
-          - uma nota de relevância conforme o assunto, de 0 a 100, para um público de tecnologia (Desenvolvedores/Tech Leads/Entusiastas).
+          Você deve retornar OBRIGATORIAMENTE um objeto JSON com as seguintes chaves:
+          - "tags": Um array de strings (máximo 5) com as categorias do artigo.
+          - "summary": Uma string contendo um resumo jornalístico conciso em Português (cerca de 2 parágrafos).
+          - "relevanceScore": Um número de 0 a 100 indicando a relevância para o público tech.
 
-          Instruções para Tags:
-          1. PRIORIDADE: Selecione tags da "Lista de Tags Disponíveis" se o assunto for o mesmo (ex: use 'Apple' se o texto diz 'Apple Inc' e 'Apple' está na lista).
-          2. CRIAÇÃO: Apenas crie uma NOVA tag se o conceito for importante e NÃO existir na lista.
-          3. FORMATO: Tags curtas, simples e em Title Case (ex: Startups, Typescript, AI).
+          Instruções para as chaves:
+          1. "tags": PRIORIDADE para selecionar da "Lista de Tags Disponíveis". Se não houver, crie novas em Title Case.
+          2. "summary": Deve ser profissional e informativo.
+          3. "relevanceScore": Seja criterioso na pontuação.
         `,
       });
 
