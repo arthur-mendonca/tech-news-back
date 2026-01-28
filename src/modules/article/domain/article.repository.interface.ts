@@ -6,6 +6,7 @@ export interface IArticleRepository {
   update(id: string, article: Partial<Article>): Promise<Article>;
   findBySlug(slug: string): Promise<Article | null>;
   findAll(): Promise<Article[]>;
+  updateEmbedding(id: string, embedding: number[]): Promise<void>;
 }
 
 export const IArticleRepository = Symbol("IArticleRepository");

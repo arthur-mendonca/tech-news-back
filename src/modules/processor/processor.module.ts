@@ -45,6 +45,6 @@ import { PrismaArticleProcessorRepository } from "./infra/repositories/prisma-ar
       useClass: PrismaArticleProcessorRepository,
     },
   ],
-  exports: [ProcessArticleUseCase, BullModule],
+  exports: [ProcessArticleUseCase, BullModule, IEmbeddingsGateway],
 })
 export class ProcessorModule { }
