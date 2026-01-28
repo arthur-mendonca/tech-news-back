@@ -16,8 +16,8 @@ import { BullModule } from '@nestjs/bullmq';
     ConfigModule.forRoot({ isGlobal: true }),
     BullModule.forRoot({
       connection: {
-        host: process.env.REDIS_HOST || 'localhost',
-        port: parseInt(process.env.REDIS_PORT || '6379'),
+        host: process.env.REDIS_HOST || "localhost",
+        port: parseInt(process.env.REDIS_PORT || "6379"),
       },
     }),
     PrismaModule,

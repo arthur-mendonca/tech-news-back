@@ -1,7 +1,7 @@
-import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { IArticleRepository } from '../../article/domain/article.repository.interface';
-import { SearchService } from '../services/search.service';
-import { Article } from '../../article/domain/article.entity';
+import { Inject, Injectable, Logger, NotFoundException } from "@nestjs/common";
+import { IArticleRepository } from "../../article/domain/article.repository.interface";
+import { ISearchGateway } from "../domain/gateways/search.gateway.interface";
+import { Article } from "../../article/domain/article.entity";
 
 @Injectable()
 export class EnrichArticleUseCase {
@@ -10,8 +10,9 @@ export class EnrichArticleUseCase {
   constructor(
     @Inject(IArticleRepository)
     private readonly articleRepository: IArticleRepository,
-    private readonly searchService: SearchService,
-  ) { }
+    @Inject(ISearchGateway)
+    private readonly searchGateway: ISearchGateway,
+  ) {}
 
   async execute(articleId: string): Promise<Article> {
     const article = await this.articleRepository.findById(articleId);
@@ -22,7 +23,7 @@ export class EnrichArticleUseCase {
 
     this.logger.log(`Enriching article: ${article.title}`);
 
-    const relatedUrls = await this.searchService.findRelatedArticles(
+    const relatedUrls = await this.searchGateway.findRelatedArticles(
       article.title,
       article.originalUrl,
     );
@@ -32,9 +33,7 @@ export class EnrichArticleUseCase {
       return article;
     }
 
-    const filteredUrls = relatedUrls.filter(
-      (url) => url && url !== article.originalUrl,
-    );
+    const filteredUrls = relatedUrls.filter((url) => url && url !== article.originalUrl);
     const uniqueNewUrls = [...new Set(filteredUrls)];
 
     const currentUrls = article.sourceUrls || [];
@@ -42,21 +41,21 @@ export class EnrichArticleUseCase {
 
     // Final safety check: ensure originalUrl is NOT in the list
     if (article.originalUrl) {
-      allUrls = allUrls.filter(u => u !== article.originalUrl);
+      allUrls = allUrls.filter((u) => u !== article.originalUrl);
     }
 
     // Ensure we have at least 2 sources if possible (best effort warning)
     if (allUrls.length < 2) {
-      this.logger.warn(`Could not find enough unique sources for article ${article.title}. Found: ${allUrls.length}`);
+      this.logger.warn(
+        `Could not find enough unique sources for article ${article.title}. Found: ${allUrls.length}`,
+      );
     }
 
     const updatedArticle = await this.articleRepository.update(articleId, {
       sourceUrls: allUrls,
     });
 
-    this.logger.log(
-      `Article enriched with ${uniqueNewUrls.length} new sources`,
-    );
+    this.logger.log(`Article enriched with ${uniqueNewUrls.length} new sources`);
     return updatedArticle;
   }
 }

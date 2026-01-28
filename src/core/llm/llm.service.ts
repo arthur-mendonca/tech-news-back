@@ -3,43 +3,8 @@ import { ConfigService } from '@nestjs/config';
 import { google } from '@ai-sdk/google';
 import { generateText as aiGenerateText, generateObject as aiGenerateObject } from 'ai';
 import { z } from 'zod';
-
-export interface LLMTextResponse {
-  text: string;
-}
-
-export interface LLMObjectResponse<T> {
-  object: T;
-}
-
-interface OpenRouterUsage {
-  prompt_tokens: number;
-  completion_tokens: number;
-  total_tokens: number;
-}
-
-interface OpenRouterMessage {
-  role: string;
-  content: string | null;
-  refusal?: string | null;
-}
-
-interface OpenRouterChoice {
-  logprobs: null | any;
-  finish_reason: string | null;
-  index: number;
-  message: OpenRouterMessage;
-}
-
-interface OpenRouterResponse {
-  id: string;
-  provider: string;
-  model: string;
-  object: string;
-  created: number;
-  choices: OpenRouterChoice[];
-  usage: OpenRouterUsage;
-}
+import { LLMTextResponse, LLMObjectResponse } from './types/llm-response.types';
+import { OpenRouterResponse } from './types/openrouter.types';
 
 @Injectable()
 export class LLMService {

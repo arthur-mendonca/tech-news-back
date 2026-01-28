@@ -5,7 +5,7 @@ import { PrismaService } from "../../../core/prisma/prisma.service";
 
 @Injectable()
 export class PrismaArticleRepository implements IArticleRepository {
-  constructor(private prisma: PrismaService) { }
+  constructor(private prisma: PrismaService) {}
 
   async create(articleData: Partial<Article>): Promise<Article> {
     const created = await this.prisma.article.create({
@@ -24,27 +24,39 @@ export class PrismaArticleRepository implements IArticleRepository {
   }
 
   async findById(id: string): Promise<Article | null> {
-    const found = await this.prisma.article.findUnique({ where: { id } });
+    const found = await this.prisma.article.findUnique({
+      where: { id },
+      include: { tags: true },
+    });
     return found ? new Article({ ...found, content: found.content }) : null;
   }
 
   async update(id: string, articleData: Partial<Article>): Promise<Article> {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { tags, ...data } = articleData;
+
     const updated = await this.prisma.article.update({
       where: { id },
       data: {
-        ...articleData,
+        ...data,
       },
+      include: { tags: true },
     });
     return new Article({ ...updated, content: updated.content });
   }
 
   async findBySlug(slug: string): Promise<Article | null> {
-    const found = await this.prisma.article.findUnique({ where: { slug } });
+    const found = await this.prisma.article.findUnique({
+      where: { slug },
+      include: { tags: true },
+    });
     return found ? new Article({ ...found, content: found.content }) : null;
   }
 
   async findAll(): Promise<Article[]> {
-    const all = await this.prisma.article.findMany();
+    const all = await this.prisma.article.findMany({
+      include: { tags: true },
+    });
     return all.map((a) => new Article({ ...a, content: a.content }));
   }
 }

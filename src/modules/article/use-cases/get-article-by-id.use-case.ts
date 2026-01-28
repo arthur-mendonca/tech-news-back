@@ -6,12 +6,12 @@ import { Article } from "../domain/article.entity";
 export class GetArticleByIdUseCase {
   constructor(
     @Inject(IArticleRepository)
-    private readonly articleRepository: IArticleRepository
+    private readonly articleRepository: IArticleRepository,
   ) {}
 
   async execute(id: string): Promise<Article> {
     const article = await this.articleRepository.findById(id);
-    
+
     if (!article) {
       throw new NotFoundException(`Article with ID ${id} not found`);
     }
