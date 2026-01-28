@@ -5,12 +5,14 @@ import { GetArticleByIdUseCase } from "./use-cases/get-article-by-id.use-case";
 import { PrismaArticleRepository } from "./infra/prisma-article.repository";
 import { IArticleRepository } from "./domain/article.repository.interface";
 import { PrismaModule } from "../../core/prisma/prisma.module";
+import { FindAllArticlesUseCase } from "./use-cases/find-all-articles.use-case";
 
 @Module({
   imports: [PrismaModule],
   controllers: [ArticleController],
   providers: [
     CreateArticleUseCase,
+    FindAllArticlesUseCase,
     GetArticleByIdUseCase,
     {
       provide: IArticleRepository,
@@ -19,4 +21,4 @@ import { PrismaModule } from "../../core/prisma/prisma.module";
   ],
   exports: [CreateArticleUseCase, GetArticleByIdUseCase, IArticleRepository],
 })
-export class ArticleModule {}
+export class ArticleModule { }

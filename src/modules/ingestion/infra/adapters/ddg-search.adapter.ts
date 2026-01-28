@@ -1,15 +1,15 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { searchNews, SafeSearchType, SearchTimeType, NewsSearchResults } from "duck-duck-scrape";
+import { ISearchGateway } from "../../domain/gateways/search.gateway.interface";
 
 @Injectable()
-export class SearchService {
-  private readonly logger = new Logger(SearchService.name);
+export class DdgSearchAdapter implements ISearchGateway {
+  private readonly logger = new Logger(DdgSearchAdapter.name);
 
   async findRelatedArticles(title: string, originalUrl?: string): Promise<string[]> {
     try {
       let query = title;
 
-      // Exclusão de domínio (mesma lógica anterior)
       if (originalUrl) {
         try {
           const domain = new URL(originalUrl).hostname.replace("www.", "");

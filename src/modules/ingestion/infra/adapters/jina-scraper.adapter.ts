@@ -1,5 +1,6 @@
 import { Injectable, Logger } from "@nestjs/common";
 import axios from "axios";
+import { IScraperGateway } from "../../domain/gateways/scraper.gateway.interface";
 
 export interface JinaUsage {
   tokens: number;
@@ -25,9 +26,8 @@ export interface JinaResponse {
 }
 
 @Injectable()
-export class ScraperService {
-  private readonly logger = new Logger(ScraperService.name);
-  // Nota: Idealmente mover para .env
+export class JinaScraperAdapter implements IScraperGateway {
+  private readonly logger = new Logger(JinaScraperAdapter.name);
   private readonly jinaApiKey = process.env.JINA_API_KEY;
 
   async scrape(url: string): Promise<string> {
@@ -47,7 +47,6 @@ export class ScraperService {
 
       if (data && data.code === 200 && data.data && data.data.content) {
         const cleanContent = data.data.content;
-        // Log opcional para confirmar a economia
         const tokens = data.data.usage?.tokens || 0;
         this.logger.log(`✅ Scraped ${url} (${tokens} tokens). Length: ${cleanContent.length}`);
         return cleanContent;

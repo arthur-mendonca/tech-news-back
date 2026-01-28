@@ -1,6 +1,6 @@
 import { Inject, Injectable, Logger, NotFoundException } from "@nestjs/common";
 import { IArticleRepository } from "../../article/domain/article.repository.interface";
-import { SearchService } from "../services/search.service";
+import { ISearchGateway } from "../domain/gateways/search.gateway.interface";
 import { Article } from "../../article/domain/article.entity";
 
 @Injectable()
@@ -10,7 +10,8 @@ export class EnrichArticleUseCase {
   constructor(
     @Inject(IArticleRepository)
     private readonly articleRepository: IArticleRepository,
-    private readonly searchService: SearchService,
+    @Inject(ISearchGateway)
+    private readonly searchGateway: ISearchGateway,
   ) {}
 
   async execute(articleId: string): Promise<Article> {
@@ -22,7 +23,7 @@ export class EnrichArticleUseCase {
 
     this.logger.log(`Enriching article: ${article.title}`);
 
-    const relatedUrls = await this.searchService.findRelatedArticles(
+    const relatedUrls = await this.searchGateway.findRelatedArticles(
       article.title,
       article.originalUrl,
     );
