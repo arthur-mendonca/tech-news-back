@@ -59,4 +59,12 @@ export class PrismaArticleRepository implements IArticleRepository {
     });
     return all.map((a) => new Article({ ...a, content: a.content }));
   }
+
+  async updateEmbedding(id: string, embedding: number[]): Promise<void> {
+    await this.prisma.$executeRaw`
+      UPDATE "Article"
+      SET embedding = ${JSON.stringify(embedding)}::vector
+      WHERE id = ${id}
+    `;
+  }
 }

@@ -16,7 +16,11 @@ import { IFeedSourceRepository } from "./domain/repositories/feed-source.reposit
 import { PrismaFeedSourceRepository } from "./infra/repositories/prisma-feed-source.repository";
 
 @Module({
-  imports: [ArticleModule, PrismaModule, forwardRef(() => ProcessorModule)],
+  imports: [
+    forwardRef(() => ArticleModule),
+    PrismaModule,
+    forwardRef(() => ProcessorModule)
+  ],
   controllers: [IngestionController],
   providers: [
     IngestionService,
