@@ -21,11 +21,9 @@ model Article {
   createdAt      DateTime  @default(now())
   publishedAt    DateTime?
 
-  // Relacionamentos
   tags Tag[]
 
-  // 768 dimensões para modelos Gemini como text-embedding-004
-  embedding Unsupported("vector(768)")?
+  embedding Unsupported("vector(3072)")?
 
   @@index([slug])
   @@index([createdAt])
