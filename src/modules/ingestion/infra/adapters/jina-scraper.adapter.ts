@@ -11,8 +11,8 @@ export interface JinaContent {
   description: string;
   url: string;
   content: string;
-  metadata?: Record<string, any>;
-  external?: Record<string, any>;
+  metadata?: Record<string, unknown>;
+  external?: Record<string, unknown>;
   usage?: JinaUsage;
 }
 

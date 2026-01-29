@@ -7,6 +7,8 @@ import { ArticleModule } from "./modules/article/article.module";
 import { TagModule } from "./modules/tag/tag.module";
 import { IngestionModule } from "./modules/ingestion/ingestion.module";
 import { ProcessorModule } from "./modules/processor/processor.module";
+import { AuthModule } from "./modules/auth/auth.module";
+import { UserModule } from "./modules/user/user.module";
 import { PrismaModule } from "./core/prisma/prisma.module";
 import { LLMModule } from "./core/llm/llm.module";
 import { BullModule } from '@nestjs/bullmq';
@@ -23,6 +25,8 @@ import { BullModule } from '@nestjs/bullmq';
     PrismaModule,
     LLMModule,
     ScheduleModule.forRoot(),
+    AuthModule,
+    UserModule,
     ArticleModule,
     TagModule,
     IngestionModule,

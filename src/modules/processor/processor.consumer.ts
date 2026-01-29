@@ -27,7 +27,8 @@ export class ProcessorConsumer extends WorkerHost {
       await this.processArticleUseCase.execute(job.data.articleId);
       this.logger.log(`************ Job ${job.id} completed ************`);
     } catch (error) {
-      this.logger.error(`Job ${job.id} failed: ${error}`);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      this.logger.error(`Job ${job.id} failed: ${errorMessage}`);
       throw error;
     }
   }

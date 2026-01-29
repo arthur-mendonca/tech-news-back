@@ -60,9 +60,11 @@ export class IngestFeedUseCase {
                 articleId: createdArticle.id,
               });
             } catch (error) {
-              this.logger.error(`Error adding article to queue ${item.title}: ${error}`);
+              const errorMessage = error instanceof Error ? error.message : String(error);
+              this.logger.error(`Error adding article to queue ${item.title}: ${errorMessage}`);
             }
           } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
             if (
               error instanceof Error &&
               (error.message.includes("already exists") ||
@@ -70,12 +72,13 @@ export class IngestFeedUseCase {
             ) {
               this.logger.warn(`Article already exists: ${item.title}`);
             } else {
-              this.logger.error(`Error processing item ${item.title}: ${error}`);
+              this.logger.error(`Error processing item ${item.title}: ${errorMessage}`);
             }
           }
         }
       } catch (error) {
-        this.logger.error(`Error processing source ${source.name}: ${error}`);
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        this.logger.error(`Error processing source ${source.name}: ${errorMessage}`);
       }
     }
     this.logger.log("RSS ingestion finished.");
