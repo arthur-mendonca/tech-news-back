@@ -4,19 +4,22 @@ WORKDIR /app
 
 # Instalar dependências
 COPY package*.json ./
-COPY prisma ./prisma/
-COPY prisma.config.ts ./
 
 # Instalar todas as dependências (incluindo dev)
+# Otimização: Rodar npm ci ANTES de copiar o prisma para aproveitar o cache de camadas
+# Se o schema.prisma mudar, não precisamos reinstalar os pacotes npm
 RUN npm ci
 
 # Gerar o Prisma Client
+COPY prisma ./prisma/
+COPY prisma.config.ts ./
 # --no-engine é importante para build environments onde o banco não está acessível
 # Definimos uma URL dummy para o build, pois o prisma generate precisa validar o config
 ARG DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy"
 RUN npx prisma generate
 
 # Copiar o código fonte
+# Otimização: Copiar o código fonte por último, pois é o que muda com mais frequência
 COPY . .
 
 # Build da aplicação

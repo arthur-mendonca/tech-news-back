@@ -8,7 +8,8 @@ import { TagModule } from "./modules/tag/tag.module";
 import { IngestionModule } from "./modules/ingestion/ingestion.module";
 import { ProcessorModule } from "./modules/processor/processor.module";
 import { PrismaModule } from "./core/prisma/prisma.module";
-import { BullModule } from "@nestjs/bullmq";
+import { LLMModule } from "./core/llm/llm.module";
+import { BullModule } from '@nestjs/bullmq';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { BullModule } from "@nestjs/bullmq";
       },
     }),
     PrismaModule,
+    LLMModule,
     ScheduleModule.forRoot(),
     ArticleModule,
     TagModule,
@@ -29,4 +31,4 @@ import { BullModule } from "@nestjs/bullmq";
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule { }
