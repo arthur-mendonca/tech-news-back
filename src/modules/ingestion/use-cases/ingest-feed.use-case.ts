@@ -47,7 +47,6 @@ export class IngestFeedUseCase {
               summary: item.contentSnippet || "",
               originalUrl: item.link,
               slug: slug,
-              published: true,
               publishedAt: publishedDate,
               sourceUrls: [item.link],
               relevanceScore: 0,

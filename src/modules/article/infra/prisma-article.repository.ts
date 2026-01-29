@@ -5,7 +5,7 @@ import { PrismaService } from "../../../core/prisma/prisma.service";
 
 @Injectable()
 export class PrismaArticleRepository implements IArticleRepository {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   async create(articleData: Partial<Article>): Promise<Article> {
     const created = await this.prisma.article.create({
@@ -17,7 +17,7 @@ export class PrismaArticleRepository implements IArticleRepository {
         originalUrl: articleData.originalUrl!,
         sourceUrls: articleData.sourceUrls || [],
         relevanceScore: articleData.relevanceScore || 0,
-        published: articleData.published || false,
+        status: articleData.status,
       },
     });
     return new Article(created);

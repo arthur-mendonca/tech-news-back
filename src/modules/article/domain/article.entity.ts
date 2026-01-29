@@ -1,3 +1,4 @@
+import { ArticleStatus } from "@prisma/client";
 import { Tag } from "../../tag/domain/tag.entity";
 
 export class Article {
@@ -9,7 +10,7 @@ export class Article {
   originalUrl: string;
   sourceUrls: string[];
   relevanceScore: number;
-  published: boolean;
+  status: ArticleStatus;
   createdAt: Date;
   tags?: Tag[];
 
