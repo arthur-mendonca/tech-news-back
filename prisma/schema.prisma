@@ -8,17 +8,23 @@ datasource db {
   extensions = [vector]
 }
 
+enum ArticleStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
 model Article {
-  id             String    @id @default(uuid())
-  slug           String    @unique
+  id             String        @id @default(uuid())
+  slug           String        @unique
   title          String
   summary        String
-  content        String?   @db.Text
+  content        String?       @db.Text
   originalUrl    String
   sourceUrls     String[]
-  relevanceScore Int // Nota de 0-100 do Gatekeeper
-  published      Boolean   @default(false)
-  createdAt      DateTime  @default(now())
+  relevanceScore Int
+  status         ArticleStatus @default(DRAFT)
+  createdAt      DateTime      @default(now())
   publishedAt    DateTime?
 
   tags Tag[]
