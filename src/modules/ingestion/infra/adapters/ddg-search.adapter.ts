@@ -15,7 +15,8 @@ export class DdgSearchAdapter implements ISearchGateway {
           const domain = new URL(originalUrl).hostname.replace("www.", "");
           query = `${title} -site:${domain}`;
         } catch (e) {
-          this.logger.error(`Error parsing URL ${originalUrl}: ${e}`);
+          const errorMessage = e instanceof Error ? e.message : String(e);
+          this.logger.error(`Error parsing URL ${originalUrl}: ${errorMessage}`);
         }
       }
 
@@ -75,7 +76,8 @@ export class DdgSearchAdapter implements ISearchGateway {
 
       return urls;
     } catch (error) {
-      this.logger.error(`Search failed: ${error}`);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      this.logger.error(`Search failed: ${errorMessage}`);
       return [];
     }
   }
@@ -105,8 +107,9 @@ export class DdgSearchAdapter implements ISearchGateway {
         if (isLastAttempt) throw error;
 
         const delay = 1000 * Math.pow(2, i); // Exponential backoff: 1s, 2s, 4s
+        const errorMessage = error instanceof Error ? error.message : String(error);
         this.logger.warn(
-          `Search attempt ${i + 1} failed. Retrying in ${delay}ms... Error: ${error}`,
+          `Search attempt ${i + 1} failed. Retrying in ${delay}ms... Error: ${errorMessage}`,
         );
         await new Promise((resolve) => setTimeout(resolve, delay));
       }

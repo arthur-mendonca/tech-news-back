@@ -84,7 +84,8 @@ export class ProcessArticleUseCase {
 
       this.logger.log(`✅ Article processed successfully: ${article.title}`);
     } catch (error) {
-      this.logger.error(`❌ Failed to process article ${articleId}: ${error}`);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      this.logger.error(`❌ Failed to process article ${articleId}: ${errorMessage}`);
       throw error;
     }
   }

@@ -41,6 +41,15 @@ model Tag {
   articles Article[]
 }
 
+model User {
+  id           String    @id @default(uuid())
+  email        String    @unique
+  passwordHash String
+  lastLogin    DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
 model FeedSource {
   id       String  @id @default(uuid())
   name     String

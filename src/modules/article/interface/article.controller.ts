@@ -1,11 +1,13 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post } from "@nestjs/common";
+import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, UseGuards } from "@nestjs/common";
 import { CreateArticleUseCase } from "../use-cases/create-article.use-case";
 import { GetArticleByIdUseCase } from "../use-cases/get-article-by-id.use-case";
 import { Article } from "../domain/article.entity";
 import { FindAllArticlesUseCase } from "../use-cases/find-all-articles.use-case";
 import { EmbedArticleUseCase } from "../use-cases/embed-article.use-case";
+import { JwtAuthGuard } from "../../auth/infra/jwt-auth.guard";
 
 @Controller("articles")
+@UseGuards(JwtAuthGuard)
 export class ArticleController {
   constructor(
     private readonly createArticleUseCase: CreateArticleUseCase,
