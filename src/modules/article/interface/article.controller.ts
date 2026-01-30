@@ -7,7 +7,6 @@ import { EmbedArticleUseCase } from "../use-cases/embed-article.use-case";
 import { JwtAuthGuard } from "../../auth/infra/jwt-auth.guard";
 
 @Controller("articles")
-@UseGuards(JwtAuthGuard)
 export class ArticleController {
   constructor(
     private readonly createArticleUseCase: CreateArticleUseCase,
@@ -16,11 +15,13 @@ export class ArticleController {
     private readonly embedArticleUseCase: EmbedArticleUseCase,
   ) { }
 
+  @UseGuards(JwtAuthGuard)
   @Post()
   async create(@Body() body: Partial<Article>) {
     return this.createArticleUseCase.execute(body);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Post(":id/embed")
   @HttpCode(HttpStatus.OK)
   async embed(@Param("id") id: string) {
