@@ -2,6 +2,7 @@ import { Injectable } from "@nestjs/common";
 import { IArticleRepository } from "../domain/article.repository.interface";
 import { Article } from "../domain/article.entity";
 import { PrismaService } from "../../../core/prisma/prisma.service";
+import { PaginatedResult, PaginationParams } from "src/shared/interfaces/pagination.interface";
 
 @Injectable()
 export class PrismaArticleRepository implements IArticleRepository {
@@ -53,11 +54,29 @@ export class PrismaArticleRepository implements IArticleRepository {
     return found ? new Article({ ...found, content: found.content }) : null;
   }
 
-  async findAll(): Promise<Article[]> {
-    const all = await this.prisma.article.findMany({
-      include: { tags: true },
-    });
-    return all.map((a) => new Article({ ...a, content: a.content }));
+  async findAll(params: PaginationParams): Promise<PaginatedResult<Article>> {
+    const { page, limit } = params;
+    const skip = (page - 1) * limit;
+
+    const [total, articles] = await Promise.all([
+      this.prisma.article.count(),
+      this.prisma.article.findMany({
+        skip,
+        take: limit,
+        include: { tags: true },
+        orderBy: { createdAt: "desc" },
+      }),
+    ]);
+
+    return {
+      data: articles.map((a) => new Article({ ...a, content: a.content })),
+      meta: {
+        total,
+        page,
+        limit,
+        lastPage: Math.ceil(total / limit),
+      },
+    };
   }
 
   async updateEmbedding(id: string, embedding: number[]): Promise<void> {

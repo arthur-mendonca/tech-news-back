@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, UseGuards } from "@nestjs/common";
+import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Query, UseGuards } from "@nestjs/common";
 import { CreateArticleUseCase } from "../use-cases/create-article.use-case";
 import { GetArticleByIdUseCase } from "../use-cases/get-article-by-id.use-case";
 import { Article } from "../domain/article.entity";
@@ -7,7 +7,6 @@ import { EmbedArticleUseCase } from "../use-cases/embed-article.use-case";
 import { JwtAuthGuard } from "../../auth/infra/jwt-auth.guard";
 
 @Controller("articles")
-@UseGuards(JwtAuthGuard)
 export class ArticleController {
   constructor(
     private readonly createArticleUseCase: CreateArticleUseCase,
@@ -16,11 +15,13 @@ export class ArticleController {
     private readonly embedArticleUseCase: EmbedArticleUseCase,
   ) { }
 
+  @UseGuards(JwtAuthGuard)
   @Post()
   async create(@Body() body: Partial<Article>) {
     return this.createArticleUseCase.execute(body);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Post(":id/embed")
   @HttpCode(HttpStatus.OK)
   async embed(@Param("id") id: string) {
@@ -34,7 +35,13 @@ export class ArticleController {
   }
 
   @Get()
-  async findAll() {
-    return this.findAllArticlesUseCase.execute();
+  async findAll(
+    @Query("page") page = 1,
+    @Query("limit") limit = 10
+  ) {
+    return this.findAllArticlesUseCase.execute({
+      page: Number(page),
+      limit: Number(limit),
+    });
   }
 } 

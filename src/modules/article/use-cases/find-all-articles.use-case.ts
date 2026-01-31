@@ -1,6 +1,7 @@
-import { Injectable, Inject, NotFoundException } from "@nestjs/common";
+import { Injectable, Inject } from "@nestjs/common";
 import { IArticleRepository } from "../domain/article.repository.interface";
 import { Article } from "../domain/article.entity";
+import { PaginationParams, PaginatedResult } from "../../../shared/interfaces/pagination.interface";
 
 @Injectable()
 export class FindAllArticlesUseCase {
@@ -9,13 +10,7 @@ export class FindAllArticlesUseCase {
         private readonly articleRepository: IArticleRepository
     ) { }
 
-    async execute(): Promise<Article[]> {
-        const articles = await this.articleRepository.findAll();
-
-        if (!articles) {
-            throw new NotFoundException(`No articles found`);
-        }
-
-        return articles;
+    async execute(params: PaginationParams): Promise<PaginatedResult<Article>> {
+        return this.articleRepository.findAll(params);
     }
 }
